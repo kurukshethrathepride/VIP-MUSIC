@@ -30,7 +30,7 @@ services:
         sync: false
 
       - key: PYTHON_VERSION
-        value: 3.11.4
+        value: 3.10
      
       - key: PORT
         value: "10000"
