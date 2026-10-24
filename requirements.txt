@@ -1,4 +1,5 @@
-pyromod
+https://github.com/KurimuzonAkuma/pyrogram/archive/refs/heads/dev.zip
+asyncio
 openai
 aiofiles
 aiohttp
@@ -19,8 +20,6 @@ psutil
 pytube
 pykeyboard
 unidecode
-py-tgcalls==1.2.9
-ntgcalls==1.1.2
 python-dotenv
 PyYAML==6.0.2
 requests
@@ -31,7 +30,6 @@ urllib3
 uvloop
 flask
 gunicorn==20.1.0
-kurigram
 git+https://github.com/yt-dlp/yt-dlp
 git+https://github.com/alexmercerind/youtube-search-python@main
 git+https://github.com/joetats/youtube_search@master
