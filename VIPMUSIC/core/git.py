@@ -75,7 +75,11 @@ def git():
         except BaseException:
             pass
 
+    try:
     nrs = repo.remote("origin")
+    except ValueError:
+    from git import Remote
+    nrs = Remote.create(repo, "origin", "https://github.com/kurukshethrathepride/VIP-MUSIC.git")
     nrs.fetch(config.UPSTREAM_BRANCH)
     try:
         nrs.pull(config.UPSTREAM_BRANCH)
