@@ -11,7 +11,7 @@
 import asyncio
 import shlex
 from typing import Tuple
-
+from git import Remote
 from git import Repo
 from git.exc import GitCommandError, InvalidGitRepositoryError
 
@@ -74,16 +74,14 @@ def git():
             repo.create_remote("origin", config.UPSTREAM_REPO)
         except BaseException:
             pass
-
-    try:
-    nrs = repo.remote("origin")
-    except ValueError:
-    from git import Remote
-    nrs = Remote.create(repo, "origin", "https://github.com/kurukshethrathepride/VIP-MUSIC.git")
-    nrs.fetch(config.UPSTREAM_BRANCH)
-    try:
+        try:
+            nrs = repo.remote("origin")
+        except ValueError:
+            nrs = Remote.create(repo, "origin", "https://github.com/kurukshethrathepride/VIP-MUSIC.git")
+            nrs.fetch(config.UPSTREAM_BRANCH)
+        try:
         nrs.pull(config.UPSTREAM_BRANCH)
-    except GitCommandError:
+        except GitCommandError:
         repo.git.reset("--hard", "FETCH_HEAD")
     install_req("pip3 install --no-cache-dir -r requirements.txt")
     LOGGER(__name__).info(f"Fetched Updates from: {REPO_LINK}")
