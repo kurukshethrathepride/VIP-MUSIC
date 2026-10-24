@@ -8,15 +8,15 @@
 # All rights reserved.
 #
 
+
 import asyncio
 import shlex
 from typing import Tuple
-from git import Remote
-from git import Repo
+
+from git import Remote, Repo
 from git.exc import GitCommandError, InvalidGitRepositoryError
 
 import config
-
 from ..logging import LOGGER
 
 loop = asyncio.get_event_loop_policy().get_event_loop()
@@ -43,45 +43,73 @@ def install_req(cmd: str) -> Tuple[str, str, int, int]:
 
 def git():
     REPO_LINK = config.UPSTREAM_REPO
+
     if config.GIT_TOKEN:
         GIT_USERNAME = REPO_LINK.split("com/")[1].split("/")[0]
         TEMP_REPO = REPO_LINK.split("https://")[1]
-        UPSTREAM_REPO = f"https://{GIT_USERNAME}:{config.GIT_TOKEN}@{TEMP_REPO}"
+        UPSTREAM_REPO = (
+            f"https://{GIT_USERNAME}:{config.GIT_TOKEN}@{TEMP_REPO}"
+        )
     else:
-        UPSTREAM_REPO = config.UPSTREAM_REPO
+        UPSTREAM_REPO = REPO_LINK
+
     try:
         repo = Repo()
-        LOGGER(__name__).info(f"Git Client Found [VPS DEPLOYER]")
+        LOGGER(__name__).info("Git Client Found [VPS DEPLOYER]")
+
     except GitCommandError:
-        LOGGER(__name__).info(f"Invalid Git Command")
+        LOGGER(__name__).info("Invalid Git Command")
+        return
+
     except InvalidGitRepositoryError:
         repo = Repo.init()
+
         if "origin" in repo.remotes:
             origin = repo.remote("origin")
+            origin.set_url(UPSTREAM_REPO)
         else:
             origin = repo.create_remote("origin", UPSTREAM_REPO)
+
         origin.fetch()
+
         repo.create_head(
             config.UPSTREAM_BRANCH,
             origin.refs[config.UPSTREAM_BRANCH],
         )
+
         repo.heads[config.UPSTREAM_BRANCH].set_tracking_branch(
             origin.refs[config.UPSTREAM_BRANCH]
         )
+
         repo.heads[config.UPSTREAM_BRANCH].checkout(True)
 
-        try:
-            repo.create_remote("origin", config.UPSTREAM_REPO)
-        except BaseException:
-            pass
-        try:
-            nrs = repo.remote("origin")
-        except ValueError:
-            nrs = Remote.create(repo, "origin", "https://github.com/kurukshethrathepride/VIP-MUSIC.git")
-            nrs.fetch(config.UPSTREAM_BRANCH)
-        try:
+    try:
+        nrs = repo.remote("origin")
+    except ValueError:
+        nrs = Remote.create(
+            repo,
+            "origin",
+            UPSTREAM_REPO,
+        )
+        nrs.fetch(config.UPSTREAM_BRANCH)
+
+    try:
         nrs.pull(config.UPSTREAM_BRANCH)
-        except GitCommandError:
+    except GitCommandError as e:
+        LOGGER(__name__).warning(
+            f"Git pull failed: {e}. Resetting to FETCH_HEAD."
+        )
         repo.git.reset("--hard", "FETCH_HEAD")
-    install_req("pip3 install --no-cache-dir -r requirements.txt")
+
+    stdout, stderr, returncode, pid = install_req(
+        "pip3 install --no-cache-dir -r requirements.txt"
+    )
+
+    if returncode != 0:
+        LOGGER(__name__).error(
+            f"Requirements installation failed: {stderr}"
+        )
+        raise RuntimeError("Failed to install requirements.")
+
     LOGGER(__name__).info(f"Fetched Updates from: {REPO_LINK}")
+
